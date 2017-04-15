@@ -1,0 +1,87 @@
+module lab1
+
+open System
+open System.Net
+open System.IO
+open System.Collections.Specialized
+
+// почтовый адрес
+let email = "evgeniy.eg1@yandex.ru"
+// общий тип для возвращаемых вашими функциями значений, где первая часть кортежа это само значение функции, вторая - кол-во операций
+type Result = float * int
+let delta = 1e-8
+
+// *** Первая часть
+
+let fTailor x : float = (sin x) ** 2.  // функция, которую раскладываем
+let n, a, b = 20., 0., 1. // интервал
+
+
+let fac x : int =
+    let rec fac x acc = 
+        if x <= 0 then acc
+        else fac (x - 1) (acc * x)
+    fac x 1
+
+
+let tailor (x) :Result = 
+    let mutable iters = 0
+
+    let rec tailor' sum step : float  =       
+        let elem = ((-1.) ** step) * ((2. ** (1. + step * 2.) * x ** ((step+1.) * 2.)) / (float)(fac (2 * ((int)step + 1))))
+        iters <- (int)step
+        printf "%A    " (elem)
+        match elem with
+        | value when step > 12. -> sum      //ограничение по точности счета факториала
+        | value when abs(value) < delta -> sum
+        | _ -> tailor' (sum + elem) (step + 1.)
+    (tailor' 0. 0., iters)
+
+let tailorA (x) : Result = 
+    let mutable iters = 0
+    let acc = x ** 2.
+    let rec tailor' acc sum (step:float) : float  =       
+        iters <- (int)step
+        let new_value = acc * (-1.) * (4. * x ** 2.) / (  (step * 2. + 1.) * (step * 2. + 2.)  )
+        match new_value with
+        | value when step > 12. -> sum
+        | value when abs(value) < delta -> sum
+        | _ -> tailor' (new_value) (sum + new_value) (step + 1.)
+    (tailor' acc acc 1., iters)
+    
+
+
+let printTailor () = 
+    [a .. (b-a)/n .. b] 
+    |> List.map (fun x -> let (firstRes, firstCou), (secondRes, secondCou) = tailor x, tailorA x in (x, firstRes, firstCou, secondRes, secondCou, fTailor x))
+    |> List.iter (fun (a,b,c,d,e,f) -> printf "%f\t%f\t%d\t%f\t%d\t%f\n" a b c d e f )
+    
+
+
+
+// *** Вторая часть
+
+let fSolve = fun x -> x // функция, решение которой ищем
+
+let iter f a b : Result = (42., 0)
+let newton f a b : Result = (42., 0)
+let dichotomy =
+    // для функций с аккумулятором удобно ставить его в начало
+    let rec dichotomyA i (f:float->float) (a:float) (b:float) : Result = (42., 0) 
+    dichotomyA 0 // чтобы воспользоваться каррированием
+
+let printSolve () =
+    [iter; newton; dichotomy] 
+    |> List.map (fun f -> f fSolve a b) 
+    |> List.iter (fun (res, cou) -> printf "%f\t%d\n" res cou)
+
+let main () = 
+  let values = new NameValueCollection()
+  values.Add("email", email)
+  values.Add("content", File.ReadAllText(__SOURCE_DIRECTORY__ + @"/" + __SOURCE_FILE__))
+
+  let client = new WebClient()
+  let response = client.UploadValues(new Uri("http://91.239.142.110:13666/lab1"), values)
+  let responseString = Text.Encoding.Default.GetString(response)
+
+  printf "%A\n" responseString
