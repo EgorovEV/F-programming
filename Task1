@@ -64,7 +64,22 @@ let printTailor () =
 let fSolve = fun x -> x // функция, решение которой ищем
 
 let iter f a b : Result = (42., 0)
-let newton f a b : Result = (42., 0)
+
+
+let newton f a b: Result =
+    let mutable iters = 0
+    let rec newton' (point:float) (step:float) : float  =    
+        printf "%A   " (point)
+        iters <- (int)step
+        let fun_in_point = f point
+        let derivative_in_point = (f (point + delta) - f (point)) / delta
+        let new_point = point - fun_in_point / derivative_in_point
+        match abs(new_point - point) with
+        | d when abs(d) < delta -> new_point
+        | _ -> newton' new_point (step + 1.)
+    (newton' ((a+b) / 2.) 0., iters)
+
+
 let dichotomy =
     // для функций с аккумулятором удобно ставить его в начало
     let rec dichotomyA i (f:float->float) (a:float) (b:float) : Result = (42., 0) 
